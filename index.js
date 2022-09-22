@@ -29,16 +29,23 @@ const getRecursiveTree = async (owner, repo, tree_sha) => {
 
 app.get("/treeStructure", async (req, res) => {
 	const { owner, repoName } = req.query;
-	const url = `https://api.github.com/repos/${owner}/${repoName}/commits`;
-
 	try {
+		if (!owner || !repoName) {
+			throw {
+				status: 400,
+				message: "owner and repoName are required",
+			};
+		}
+		const url = `https://api.github.com/repos/${owner}/${repoName}/commits`;
+
 		const response = await axios.get(url);
 		const LAST_COMMIT = 0;
 		const { sha } = response.data[LAST_COMMIT];
 		const tree = await getRecursiveTree(owner, repoName, sha);
 		res.send(tree);
 	} catch (error) {
-		res.status(500).send(error.message);
+		const status = error?.status || 500;
+		res.status(status).send(error.message);
 	}
 });
 
